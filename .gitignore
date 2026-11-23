@@ -1,0 +1,9 @@
+node_modules
+dist
+*.tsbuildinfo
+dev-dist
+_to_delete/
+
+# Sauvegardes de recettes : données personnelles, jamais sur GitHub
+recettes-export*.csv
+*sauvegarde*.json

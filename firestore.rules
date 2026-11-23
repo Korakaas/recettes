@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Remplace EMAIL_1 et EMAIL_2 par vos deux adresses Google, directement dans la console Firebase
+    // (ne les commitez pas : le dépôt est public).
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['EMAIL_1', 'EMAIL_2'];
+    }
+    match /recipes/{id} {
+      allow read, write: if allowed();
+    }
+  }
+}
