@@ -20,15 +20,26 @@ import { Sheet } from './Sheet'
 type Mode = 'menu' | 'url' | 'text' | 'list' | 'photo'
 type Draft = Partial<RecipeDraft> & { name: string }
 
-/** Une ligne par plat ; les puces et numéros en début de ligne sont retirés. */
-export function parseNames(text: string): string[] {
+export interface NameLine {
+  name: string
+  source: string
+}
+
+/**
+ * Une ligne par plat ; les puces et numéros en début de ligne sont retirés.
+ * « Nom | où trouver la recette » : ce qui suit la barre verticale va dans la fiche (livre, page, classeur, lien…).
+ */
+export function parseNames(text: string): NameLine[] {
   const seen = new Set<string>()
-  const out: string[] = []
+  const out: NameLine[] = []
   for (const line of text.split('\n')) {
-    const name = line.replace(/^\s*(?:[-–—•*·]+|\d+[.)])\s*/, '').trim()
+    const clean = line.replace(/^\s*(?:[-–—•*·]+|\d+[.)])\s*/, '')
+    const bar = clean.indexOf('|')
+    const name = (bar >= 0 ? clean.slice(0, bar) : clean).trim()
+    const source = bar >= 0 ? clean.slice(bar + 1).trim() : ''
     if (name && !seen.has(norm(name))) {
       seen.add(norm(name))
-      out.push(name)
+      out.push({ name, source })
     }
   }
   return out
@@ -171,7 +182,7 @@ export function AddSheet() {
   }
 
   const names = parseNames(listText)
-  const newNames = names.filter((n) => !existingNames.has(norm(n)))
+  const newNames = names.filter((n) => !existingNames.has(norm(n.name)))
 
   let body: ReactNode
   if (preview) {
@@ -348,13 +359,13 @@ export function AddSheet() {
 
         {mode === 'list' ? (
           <>
-            <Field label="Un plat par ligne" htmlFor="add-list" hint="Les puces et les numéros en début de ligne sont ignorés.">
+            <Field label="Un plat par ligne" htmlFor="add-list" hint="Les puces et les numéros en début de ligne sont ignorés. Pour noter où est la recette, ajoute une barre | puis la référence (ex. Lasagne | livre orange p450).">
               <textarea
                 id="add-list"
                 className="input"
                 rows={12}
                 value={listText}
-                placeholder={'Gratin dauphinois\nCurry de pois chiches\nTarte aux pommes'}
+                placeholder={'Gratin dauphinois\nCurry de pois chiches | livre vert p279\nTarte aux pommes | classeur'}
                 onChange={(e) => setListText(e.target.value)}
               />
             </Field>
@@ -378,7 +389,7 @@ export function AddSheet() {
                 type="button"
                 className="btn"
                 disabled={!newNames.length || !!busy}
-                onClick={() => saveMany(newNames.map((name) => ({ name })), classify)}
+                onClick={() => saveMany(newNames, classify)}
               >
                 {busy ||
                   (newNames.length

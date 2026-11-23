@@ -318,14 +318,13 @@ export function EditSheet({ id, draft: initial, queue }: Omit<EditOverlay, 't'>)
         <Field label="Notes" htmlFor="f-notes">
           <textarea id="f-notes" className="input" rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} />
         </Field>
-        <Field label="Lien de la recette d’origine" htmlFor="f-src">
+        <Field label="Où trouver la recette" htmlFor="f-src" hint="Un lien, ou un livre, une page, le classeur…">
           <input
             id="f-src"
             className="input"
-            type="url"
-            inputMode="url"
+            type="text"
             value={form.source}
-            placeholder="https://"
+            placeholder="https:// ou « livre orange p450 »"
             onChange={(e) => set({ source: e.target.value })}
           />
         </Field>

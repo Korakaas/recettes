@@ -251,12 +251,16 @@ export function RecipeSheet({ id }: { id: string }) {
         </section>
       ) : null}
 
-      {/^https?:\/\//i.test(r.source) ? (
+      {r.source.trim() ? (
         <section className="block">
-          <h3 className="block-title">Source</h3>
-          <a href={r.source} target="_blank" rel="noopener noreferrer" className="link">
-            {r.source.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 60)}
-          </a>
+          <h3 className="block-title">Où trouver la recette</h3>
+          {/^https?:\/\//i.test(r.source) ? (
+            <a href={r.source} target="_blank" rel="noopener noreferrer" className="link">
+              {r.source.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 60)}
+            </a>
+          ) : (
+            <p className="prewrap">{r.source}</p>
+          )}
         </section>
       ) : null}
 
