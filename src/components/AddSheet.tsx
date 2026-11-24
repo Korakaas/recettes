@@ -11,13 +11,13 @@ import { classifyRecipes } from '../autoclass'
 import { KINDS, labelOf } from '../constants'
 import { useSettings } from '../settings'
 import { useStore } from '../store'
-import { emptyDraft, type Recipe, type RecipeDraft } from '../types'
+import { emptyDraft, normalizeRecipe, type Recipe, type RecipeDraft } from '../types'
 import { useUi } from '../ui'
 import { norm } from '../util'
 import { Field } from './Bits'
 import { Sheet } from './Sheet'
 
-type Mode = 'menu' | 'url' | 'text' | 'list' | 'photo'
+type Mode = 'menu' | 'url' | 'text' | 'list' | 'photo' | 'coded'
 type Draft = Partial<RecipeDraft> & { name: string }
 
 export interface NameLine {
@@ -45,6 +45,34 @@ export function parseNames(text: string): NameLine[] {
   return out
 }
 
+/** Recettes déjà classées, collées en JSON (tableau d'objets). Aucun appel à l'API. */
+export function parseCoded(text: string): Draft[] {
+  const cleaned = text.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/, '').trim()
+  let data: unknown
+  try {
+    data = JSON.parse(cleaned)
+  } catch {
+    throw new Error('Ce texte n’est pas lisible. Copie le bloc en entier, du « [ » au « ] ».')
+  }
+  const list = Array.isArray(data) ? data : (data as { recipes?: unknown })?.recipes
+  if (!Array.isArray(list)) throw new Error('Je ne trouve pas de liste de recettes dans ce texte.')
+  const seen = new Set<string>()
+  const out: Draft[] = []
+  for (const raw of list) {
+    if (!raw || typeof raw !== 'object') continue
+    const r = normalizeRecipe('', raw as Record<string, unknown>)
+    const { id: _id, createdAt: _c, updatedAt: _u, ...draft } = r
+    void _id
+    void _c
+    void _u
+    if (!draft.name || draft.name === 'Sans nom' || seen.has(norm(draft.name))) continue
+    seen.add(norm(draft.name))
+    out.push(draft)
+  }
+  if (!out.length) throw new Error('Aucune recette trouvée dans ce texte.')
+  return out
+}
+
 export function AddSheet() {
   const store = useStore()
   const { settings } = useSettings()
@@ -55,6 +83,7 @@ export function AddSheet() {
   const [url, setUrl] = useState('')
   const [text, setText] = useState('')
   const [listText, setListText] = useState('')
+  const [codedText, setCodedText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [toTry, setToTry] = useState(false)
   const [classify, setClassify] = useState(true)
@@ -181,6 +210,21 @@ export function AddSheet() {
     }
   }
 
+  function submitCoded() {
+    setError('')
+    try {
+      const drafts = parseCoded(codedText)
+      setPreview(drafts)
+      setPicked(Object.fromEntries(drafts.map((_, i) => [i, true])))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Lecture impossible.')
+    }
+  }
+
+  async function loadCodedFile(f: File | undefined) {
+    if (f) setCodedText(await f.text())
+  }
+
   const names = parseNames(listText)
   const newNames = names.filter((n) => !existingNames.has(norm(n.name)))
 
@@ -190,7 +234,7 @@ export function AddSheet() {
     body = (
       <>
         <p className="muted">
-          Claude a trouvé {preview.length} recette{preview.length > 1 ? 's' : ''}. Décoche celles à ne pas garder.
+          {preview.length} recette{preview.length > 1 ? 's' : ''} trouvée{preview.length > 1 ? 's' : ''}. Décoche celles à ne pas garder.
         </p>
         <ul className="checklist big">
           {preview.map((d, i) => (
@@ -253,10 +297,14 @@ export function AddSheet() {
           <strong>Du texte copié</strong>
           <span>La recette copiée depuis un site ou la description d’une vidéo.</span>
         </button>
+        <button type="button" className="choice" onClick={() => go('coded')}>
+          <strong>Des recettes déjà classées</strong>
+          <span>Un lot préparé à l’avance (type, saison, durée…), sans appel à l’API.</span>
+        </button>
       </div>
     )
   } else {
-    const needKey = mode !== 'list' && !hasKey
+    const needKey = mode !== 'list' && mode !== 'coded' && !hasKey
     body = (
       <>
         <button type="button" className="link back" onClick={() => go('menu')}>
@@ -323,6 +371,36 @@ export function AddSheet() {
             <div className="row">
               <button type="button" className="btn" disabled={!!busy || needKey} onClick={submitText}>
                 {busy || 'Lire la recette'}
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {mode === 'coded' ? (
+          <>
+            <Field
+              label="Recettes au format JSON"
+              htmlFor="add-coded"
+              hint="Colle le bloc reçu (de « [ » à « ] »), ou choisis le fichier. Tu pourras décocher des recettes avant d’ajouter."
+            >
+              <textarea
+                id="add-coded"
+                className="input"
+                rows={10}
+                value={codedText}
+                onChange={(e) => setCodedText(e.target.value)}
+              />
+            </Field>
+            <input
+              className="input"
+              type="file"
+              accept=".json,application/json,text/plain"
+              aria-label="Choisir un fichier"
+              onChange={(e) => void loadCodedFile(e.target.files?.[0])}
+            />
+            <div className="row">
+              <button type="button" className="btn" disabled={!codedText.trim()} onClick={submitCoded}>
+                Voir les recettes
               </button>
             </div>
           </>
