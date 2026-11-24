@@ -123,7 +123,7 @@ Règles de classement :
 - kind : entree, plat, accompagnement, dessert, gateau (gâteau, cake, goûter), pain (pain, brioche, viennoiserie, pâte à pizza), apero (apéritif, tapas, houmous).
 - veg : "oui" seulement si le plat ne contient ni viande, ni poisson, ni fruits de mer (œufs et laitages acceptés), sinon "non".
 - time : rapide (moins de 30 min en tout), moyen (30 min à 1 h), long (plus d'1 h, repos longs compris).
-- seasons : les saisons où l'on a naturellement envie de le faire, plusieurs possibles ; "toute" si aucune saison ne s'impose.
+- seasons : les saisons où l'on a naturellement envie de le faire, plusieurs possibles ; "toute" si aucune saison ne s'impose. Tiens compte des légumes et fruits de saison en France métropolitaine présents dans la recette (asperges, petits pois : printemps ; tomates, courgettes, aubergines, poivrons : été ; courges, champignons, châtaignes : automne ; choux, poireaux, endives, racines : hiver) et du côté réconfortant (plat mijoté, fondu) ou rafraîchissant (salade, plat froid). Quand les ingrédients sont connus, ils priment sur le nom du plat.
 - cuisine : origine ou style en un mot ("Italienne", "Indienne", "Française"). main : l'ingrédient principal en un ou deux mots, au singulier ("Poulet", "Courge").
 - budget : 1 économique, 2 normal, 3 festif ou coûteux. difficulty : 1 facile, 2 moyen, 3 technique.
 - tags : 0 à 3 étiquettes courtes en minuscules (par exemple "réconfort", "four", "une seule casserole", "invités", "léger").
