@@ -5,7 +5,7 @@ import { lastMade } from './util'
 function cell(v: string | number): string {
   let s = String(v)
   // Évite qu'un tableur interprète le texte comme une formule.
-  if (/^[=+@]/.test(s)) s = `'${s}`
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
   return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
